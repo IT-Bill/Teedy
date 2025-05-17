@@ -3,47 +3,45 @@
 </div>
 <div class="modal-body">
   <form name="registerRequestForm" novalidate>
-    <div class="form-group"
-      ng-class="{ 'has-error': registerRequestForm.username.$invalid && registerRequestForm.$dirty }">
+    <div class="form-group" ng-class="{ 'has-error': registerRequestForm.username.$invalid && registerRequestForm.$dirty }">
       <label for="inputUsername">{{ 'login.username' | translate }}</label>
-      <input type="text" id="inputUsername" name="username" required class="form-control"
-        ng-attr-placeholder="{{ 'login.username' | translate }}" ng-model="user.username" />
-      <span class="help-block" ng-show="registerRequestForm.username.$error.required && registerRequestForm.$dirty">{{
-        'validation.required' | translate }}</span>
+      <input type="text" id="inputUsername" name="username" required
+             class="form-control"
+             ng-attr-placeholder="{{ 'login.username' | translate }}"
+             ng-model="user.username" />
+      <span class="help-block" ng-show="registerRequestForm.username.$error.required && registerRequestForm.$dirty">{{ 'validation.required' | translate }}</span>
     </div>
 
-    <div class="form-group"
-      ng-class="{ 'has-error': registerRequestForm.email.$invalid && registerRequestForm.$dirty }">
+    <div class="form-group" ng-class="{ 'has-error': registerRequestForm.email.$invalid && registerRequestForm.$dirty }">
       <label for="inputEmail">{{ 'login.email' | translate }}</label>
-      <input type="email" id="inputEmail" name="email" required class="form-control"
-        ng-attr-placeholder="{{ 'login.email' | translate }}" ng-model="user.email" />
-      <span class="help-block" ng-show="registerRequestForm.email.$error.required && registerRequestForm.$dirty">{{
-        'validation.required' | translate }}</span>
-      <span class="help-block" ng-show="registerRequestForm.email.$error.email && registerRequestForm.$dirty">{{
-        'validation.email' | translate }}</span>
+      <input type="email" id="inputEmail" name="email" required
+             class="form-control"
+             ng-attr-placeholder="{{ 'login.email' | translate }}"
+             ng-model="user.email" />
+      <span class="help-block" ng-show="registerRequestForm.email.$error.required && registerRequestForm.$dirty">{{ 'validation.required' | translate }}</span>
+      <span class="help-block" ng-show="registerRequestForm.email.$error.email && registerRequestForm.$dirty">{{ 'validation.email' | translate }}</span>
     </div>
 
-    <div class="form-group"
-      ng-class="{ 'has-error': registerRequestForm.password.$invalid && registerRequestForm.$dirty }">
+    <div class="form-group" ng-class="{ 'has-error': registerRequestForm.password.$invalid && registerRequestForm.$dirty }">
       <label for="inputPassword">{{ 'login.password' | translate }}</label>
-      <input type="password" id="inputPassword" name="password" required class="form-control"
-        ng-attr-placeholder="{{ 'login.password' | translate }}" ng-model="user.password" />
-      <span class="help-block" ng-show="registerRequestForm.password.$error.required && registerRequestForm.$dirty">{{
-        'validation.required' | translate }}</span>
+      <input type="password" id="inputPassword" name="password" required
+             class="form-control"
+             ng-attr-placeholder="{{ 'login.password' | translate }}"
+             ng-model="user.password" />
+      <span class="help-block" ng-show="registerRequestForm.password.$error.required && registerRequestForm.$dirty">{{ 'validation.required' | translate }}</span>
     </div>
 
-    <div class="form-group"
-      ng-class="{ 'has-error': user.password != user.passwordconfirm && registerRequestForm.$dirty }">
+    <div class="form-group" ng-class="{ 'has-error': user.password != user.passwordconfirm && registerRequestForm.$dirty }">
       <label for="inputPasswordConfirm">{{ 'login.password_confirm' | translate }}</label>
-      <input type="password" id="inputPasswordConfirm" name="passwordconfirm" required class="form-control"
-        ng-attr-placeholder="{{ 'login.password_confirm' | translate }}" ng-model="user.passwordconfirm" />
-      <span class="help-block" ng-show="user.password != user.passwordconfirm && registerRequestForm.$dirty">{{
-        'validation.password_confirm' | translate }}</span>
+      <input type="password" id="inputPasswordConfirm" name="passwordconfirm" required
+             class="form-control"
+             ng-attr-placeholder="{{ 'login.password_confirm' | translate }}"
+             ng-model="user.passwordconfirm" />
+      <span class="help-block" ng-show="user.password != user.passwordconfirm && registerRequestForm.$dirty">{{ 'validation.password_confirm' | translate }}</span>
     </div>
   </form>
 </div>
 <div class="modal-footer">
   <button ng-click="close()" class="btn btn-default" translate="cancel"></button>
-  <button ng-click="submit()" class="btn btn-primary"
-    ng-disabled="!registerRequestForm.$valid || user.password != user.passwordconfirm" translate="ok"></button>
+  <button ng-click="submit()" class="btn btn-primary" ng-disabled="!registerRequestForm.$valid || user.password != user.passwordconfirm" translate="ok"></button>
 </div>

@@ -102,4 +102,9 @@ public class Constants {
      * mm per inch.
      */
     public static float MM_PER_INCH = 1 / (10 * 2.54f) * 72f;
+
+    /**
+     * Default user quota.
+     */
+    public static long DEFAULT_USER_QUOTA = 1000000000L; // 1 GB
 }
