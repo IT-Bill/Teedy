@@ -13,6 +13,7 @@ import com.sismics.docs.core.dao.dto.UserDto;
 import com.sismics.docs.core.event.DocumentDeletedAsyncEvent;
 import com.sismics.docs.core.event.FileDeletedAsyncEvent;
 import com.sismics.docs.core.event.PasswordLostEvent;
+import com.sismics.docs.core.listener.async.AclCreatedAsyncListener;
 import com.sismics.docs.core.model.context.AppContext;
 import com.sismics.docs.core.model.jpa.*;
 import com.sismics.docs.core.util.ConfigUtil;
@@ -33,16 +34,26 @@ import com.sismics.util.totp.GoogleAuthenticatorKey;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonValue;
 import jakarta.servlet.http.Cookie;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
+import at.favre.lib.crypto.bcrypt.BCrypt;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
+
+import com.sismics.docs.core.constant.RegistrationStatus;
+import com.sismics.docs.core.dao.dto.RegistrationRequestDto;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * User REST resources.
@@ -51,6 +62,10 @@ import java.util.Set;
  */
 @Path("/user")
 public class UserResource extends BaseResource {
+
+
+    private static final Logger log = LoggerFactory.getLogger(AclCreatedAsyncListener.class);
+
     /**
      * Creates a new user.
      *
@@ -1099,6 +1114,308 @@ public class UserResource extends BaseResource {
         JsonObjectBuilder response = Json.createObjectBuilder()
                 .add("status", "ok");
         return Response.ok().entity(response.build()).build();
+    }
+
+    /**
+     * Submit a registration request.
+     *
+     * @api {put} /user/register_request Submit a registration request
+     * @apiName PutUserRegisterRequest
+     * @apiGroup User
+     * @apiParam {String{3..50}} username Username
+     * @apiParam {String{8..50}} password Password
+     * @apiParam {String{1..100}} email E-mail
+     * @apiSuccess {String} status Status OK
+     * @apiError (client) ValidationError Validation error
+     * @apiError (client) AlreadyExistingUsername Username already exists
+     * @apiError (server) UnknownError Unknown server error
+     * @apiPermission none
+     * @apiVersion 1.5.0
+     *
+     * @param username Username
+     * @param password Password
+     * @param email E-mail
+     * @return Response
+     */
+    @PUT
+    @Path("register_request")
+    public Response registerRequest(
+            @FormParam("username") String username,
+            @FormParam("password") String password,
+            @FormParam("email") String email) {
+        
+        // Validate the input data
+        username = ValidationUtil.validateLength(username, "username", 3, 50);
+        ValidationUtil.validateUsername(username, "username");
+        password = ValidationUtil.validateLength(password, "password", 8, 50);
+        email = ValidationUtil.validateLength(email, "email", 1, 100);
+        ValidationUtil.validateEmail(email, "email");
+        
+        // Check if the username already exists
+        UserDao userDao = new UserDao();
+        User user = userDao.getActiveByUsername(username);
+        if (user != null) {
+            throw new ClientException("AlreadyExistingUsername", "Username already exists");
+        }
+        
+        // Check if there's already a pending request for this username
+        RegistrationRequestDao registrationRequestDao = new RegistrationRequestDao();
+        RegistrationRequest existingRequest = registrationRequestDao.getByUsername(username);
+        if (existingRequest != null) {
+            throw new ClientException("AlreadyExistingUsername", "A registration request for this username is already pending");
+        }
+        
+        // Create the registration request
+        RegistrationRequest registrationRequest = new RegistrationRequest()
+                .setUsername(username)
+                .setEmail(email)
+                .setPassword(hashPassword(password));
+        
+        try {
+            registrationRequestDao.create(registrationRequest);
+        } catch (Exception e) {
+            throw new ServerException("UnknownError", "Error creating the registration request", e);
+        }
+        
+        // Always return OK
+        JsonObjectBuilder response = Json.createObjectBuilder()
+                .add("status", "ok");
+        return Response.ok().entity(response.build()).build();
+    }
+
+    /**
+     * Returns all registration requests.
+     *
+     * @api {get} /user/register_request Get registration requests
+     * @apiName GetUserRegisterRequest
+     * @apiGroup User
+     * @apiParam {Number} sort_column Column index to sort on
+     * @apiParam {Boolean} asc If true, sort in ascending order
+     * @apiSuccess {Object[]} requests List of registration requests
+     * @apiSuccess {String} requests.id ID
+     * @apiSuccess {String} requests.username Username
+     * @apiSuccess {String} requests.email Email
+     * @apiSuccess {Long} requests.create_date Create date (timestamp)
+     * @apiSuccess {String} requests.status Status (PENDING, APPROVED, REJECTED)
+     * @apiSuccess {String} requests.rejection_reason Rejection reason (if rejected)
+     * @apiSuccess {String} requests.processed_by Username of the user who processed the request
+     * @apiSuccess {Long} requests.process_date Date when the request was processed (timestamp)
+     * @apiError (client) ForbiddenError Access denied
+     * @apiPermission admin
+     * @apiVersion 1.5.0
+     *
+     * @param sortColumn Sort index
+     * @param asc If true, ascending sorting, else descending
+     * @return Response
+     */
+    @GET
+    @Path("register_request")
+    public Response getRegisterRequests(
+            @QueryParam("sort_column") Integer sortColumn,
+            @QueryParam("asc") Boolean asc) {
+        if (!authenticate()) {
+            throw new ForbiddenClientException();
+        }
+        checkBaseFunction(BaseFunction.ADMIN);
+        
+        RegistrationRequestDao registrationRequestDao = new RegistrationRequestDao();
+        SortCriteria sortCriteria = new SortCriteria(sortColumn, asc);
+        List<RegistrationRequestDto> requestDtoList = registrationRequestDao.findAll(sortCriteria);
+        
+        // Get the usernames of users who processed requests
+        UserDao userDao = new UserDao();
+        Map<String, String> usernames = new HashMap<>();
+        for (RegistrationRequestDto request : requestDtoList) {
+            if (request.getUserId() != null && !usernames.containsKey(request.getUserId())) {
+                User user = userDao.getById(request.getUserId());
+                if (user != null) {
+                    usernames.put(user.getId(), user.getUsername());
+                }
+            }
+        }
+        
+        JsonArrayBuilder requests = Json.createArrayBuilder();
+        for (RegistrationRequestDto request : requestDtoList) {
+            JsonObjectBuilder requestJson = Json.createObjectBuilder()
+                    .add("id", request.getId())
+                    .add("username", request.getUsername())
+                    .add("email", request.getEmail())
+                    .add("create_date", request.getCreateTimestamp())
+                    .add("status", request.getStatus());
+            
+            if (request.getRejectionReason() != null) {
+                requestJson.add("rejection_reason", request.getRejectionReason());
+            } else {
+                requestJson.add("rejection_reason", JsonValue.NULL);
+            }
+            
+            if (request.getUserId() != null) {
+                requestJson.add("processed_by", usernames.get(request.getUserId()));
+            } else {
+                requestJson.add("processed_by", JsonValue.NULL);
+            }
+            
+            if (request.getProcessTimestamp() != null) {
+                requestJson.add("process_date", request.getProcessTimestamp());
+            } else {
+                requestJson.add("process_date", JsonValue.NULL);
+            }
+            
+            requests.add(requestJson);
+        }
+        
+        JsonObjectBuilder response = Json.createObjectBuilder()
+                .add("requests", requests);
+        return Response.ok().entity(response.build()).build();
+    }
+    
+    /**
+     * Approves a registration request.
+     *
+     * @api {post} /user/register_request/:id/approve Approve a registration request
+     * @apiName PostUserRegisterRequestApprove
+     * @apiGroup User
+     * @apiParam {String} id Registration request ID
+     * @apiSuccess {String} status Status OK
+     * @apiError (client) ForbiddenError Access denied
+     * @apiError (client) RegistrationRequestNotFound Registration request not found
+     * @apiError (client) AlreadyProcessed Registration request already processed
+     * @apiError (server) UnknownError Unknown server error
+     * @apiPermission admin
+     * @apiVersion 1.5.0
+     *
+     * @param id Registration request ID
+     * @return Response
+     */
+    @POST
+    @Path("register_request/{id}/approve")
+    public Response approveRegisterRequest(@PathParam("id") String id) {
+        if (!authenticate()) {
+            throw new ForbiddenClientException();
+        }
+        checkBaseFunction(BaseFunction.ADMIN);
+        
+        // Get the registration request
+        RegistrationRequestDao registrationRequestDao = new RegistrationRequestDao();
+        RegistrationRequest request = registrationRequestDao.getById(id);
+        if (request == null) {
+            throw new ClientException("RegistrationRequestNotFound", "Registration request not found");
+        }
+        
+        // Check if the request has already been processed
+        if (!RegistrationStatus.PENDING.name().equals(request.getStatus())) {
+            throw new ClientException("AlreadyProcessed", "Registration request already processed");
+        }
+        
+        // Check if the username still doesn't exist
+        UserDao userDao = new UserDao();
+        User user = userDao.getActiveByUsername(request.getUsername());
+        if (user != null) {
+            throw new ClientException("AlreadyExistingUsername", "Username already exists");
+        }
+        
+        // Create the user
+        user = new User();
+        user.setRoleId(Constants.DEFAULT_USER_ROLE);
+        user.setUsername(request.getUsername());
+        // Use the password from the request
+        user.setPassword(request.getPassword());
+        user.setEmail(request.getEmail());
+        // user.setStorageQuota(Constants.DEFAULT_USER_QUOTA);
+        user.setStorageQuota(10000000000L); // 10 GB
+        user.setOnboarding(true);
+        
+        try {
+            userDao.create(user, principal.getId());
+            
+            // Update the registration request
+            registrationRequestDao.approve(id, principal.getId());
+        } catch (Exception e) {
+            throw new ServerException("UnknownError", "Error creating the user", e);
+        }
+        
+        // Always return OK
+        JsonObjectBuilder response = Json.createObjectBuilder()
+                .add("status", "ok");
+        return Response.ok().entity(response.build()).build();
+    }
+    
+    /**
+     * Rejects a registration request.
+     *
+     * @api {post} /user/register_request/:id/reject Reject a registration request
+     * @apiName PostUserRegisterRequestReject
+     * @apiGroup User
+     * @apiParam {String} id Registration request ID
+     * @apiParam {String} reason Rejection reason
+     * @apiSuccess {String} status Status OK
+     * @apiError (client) ForbiddenError Access denied
+     * @apiError (client) RegistrationRequestNotFound Registration request not found
+     * @apiError (client) AlreadyProcessed Registration request already processed
+     * @apiError (client) ValidationError Validation error
+     * @apiPermission admin
+     * @apiVersion 1.5.0
+     *
+     * @param id Registration request ID
+     * @param reason Rejection reason
+     * @return Response
+     */
+    @POST
+    @Path("register_request/{id}/reject")
+    public Response rejectRegisterRequest(
+            @PathParam("id") String id,
+            @FormParam("reason") String reason) {
+        if (!authenticate()) {
+            throw new ForbiddenClientException();
+        }
+        checkBaseFunction(BaseFunction.ADMIN);
+        
+        // Validate input data
+        reason = ValidationUtil.validateLength(reason, "reason", 0, 500, true);
+        
+        // Get the registration request
+        RegistrationRequestDao registrationRequestDao = new RegistrationRequestDao();
+        RegistrationRequest request = registrationRequestDao.getById(id);
+        if (request == null) {
+            throw new ClientException("RegistrationRequestNotFound", "Registration request not found");
+        }
+        
+        // Check if the request has already been processed
+        if (!RegistrationStatus.PENDING.name().equals(request.getStatus())) {
+            throw new ClientException("AlreadyProcessed", "Registration request already processed");
+        }
+        
+        // Update the registration request
+        registrationRequestDao.reject(id, principal.getId(), reason);
+        
+        // Always return OK
+        JsonObjectBuilder response = Json.createObjectBuilder()
+                .add("status", "ok");
+        return Response.ok().entity(response.build()).build();
+    }
+    
+    /**
+     * Hash the user's password.
+     * 
+     * @param password Clear password
+     * @return Hashed password
+     */
+    private String hashPassword(String password) {
+        int bcryptWork = Constants.DEFAULT_BCRYPT_WORK;
+        String envBcryptWork = System.getenv(Constants.BCRYPT_WORK_ENV);
+        if (!Strings.isNullOrEmpty(envBcryptWork)) {
+            try {
+                int envBcryptWorkInt = Integer.parseInt(envBcryptWork);
+                if (envBcryptWorkInt >= 4 && envBcryptWorkInt <= 31) {
+                    bcryptWork = envBcryptWorkInt;
+                } else {
+                    log.warn(Constants.BCRYPT_WORK_ENV + " needs to be in range 4...31. Falling back to " + Constants.DEFAULT_BCRYPT_WORK + ".");
+                }
+            } catch (NumberFormatException e) {
+                log.warn(Constants.BCRYPT_WORK_ENV + " is not an integer. Falling back to " + Constants.DEFAULT_BCRYPT_WORK + ".");
+            }
+        }
+        return BCrypt.withDefaults().hashToString(bcryptWork, password.toCharArray());
     }
 
     /**
