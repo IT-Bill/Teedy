@@ -14,7 +14,17 @@
     "password_lost_sent_title": "Password reset email sent",
     "password_lost_sent_message": "An email has been sent to <strong>{{ username }}</strong> to reset your password",
     "password_lost_error_title": "Password reset error",
-    "password_lost_error_message": "Unable to send a password reset email, please contact your administrator for a manual reset"
+    "password_lost_error_message": "Unable to send a password reset email, please contact your administrator for a manual reset",
+    "register_request": "Request an account",
+    "register_request_description": "Don't have an account? Request one from the administrators.",
+    "register_request_button": "Request an account",
+    "register_request_title": "Account Request Form",
+    "password_confirm": "Confirm password",
+    "email": "Email address",
+    "register_request_success_title": "Registration Request Sent",
+    "register_request_success_message": "Your registration request has been sent successfully. An administrator will review your request shortly.",
+    "register_request_error_title": "Registration Request Failed",
+    "register_request_error_message": "Unable to submit your registration request. The username may already be in use."
   },
   "passwordlost": {
     "title": "Password lost",
@@ -281,6 +291,7 @@
     "menu_ldap": "LDAP authentication",
     "menu_metadata": "Custom metadata",
     "menu_monitoring": "Monitoring",
+    "menu_register": "Register",
     "ldap": {
       "title": "LDAP authentication",
       "enabled": "Enable LDAP authentication",
@@ -501,6 +512,31 @@
       "line_3": "Your files will be imported in documents according to the file importer configuration.",
       "download": "Download",
       "instructions": "Instructions"
+    },
+    "register": {
+      "title": "Registration Requests",
+      "description": "Manage user registration requests.",
+      "username": "Username",
+      "email": "Email",
+      "date": "Request Date",
+      "processed_by": "Processed By",
+      "approve": "Approve",
+      "reject": "Reject",
+      "none": "No registration requests",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "approve_confirm_title": "Approve Registration",
+      "approve_confirm_message": "Are you sure you want to approve the registration request for {{username}}?",
+      "reject_title": "Reject Registration",
+      "reject_description": "Are you sure you want to reject the registration request for {{username}}?",
+      "reject_reason": "Rejection Reason",
+      "reject_reason_placeholder": "Optional reason for rejection",
+      "error_title": "Error",
+      "error_username_exists": "Unable to create user. The username already exists.",
+      "error_reject": "Failed to reject the registration request."
     }
   },
   "feedback": {

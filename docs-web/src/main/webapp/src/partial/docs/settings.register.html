@@ -1,0 +1,53 @@
+<h1>{{ 'settings.register.title' | translate }}</h1>
+
+<div class="well-lg">
+  <p translate="settings.register.description"></p>
+</div>
+
+<div class="tab-pane table-responsive">
+  <table class="table">
+    <thead>
+    <tr>
+      <th width="15%">{{ 'settings.register.username' | translate }}</th>
+      <th width="25%">{{ 'settings.register.email' | translate }}</th>
+      <th width="15%">{{ 'settings.register.date' | translate }}</th>
+      <th width="15%">{{ 'settings.register.status' | translate }}</th>
+      <th width="15%">{{ 'settings.register.processed_by' | translate }}</th>
+      <th width="15%"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="request in requests">
+      <td>{{ request.username }}</td>
+      <td>{{ request.email }}</td>
+      <td>{{ request.create_date | date:'yyyy-MM-dd HH:mm' }}</td>
+      <td>
+        <span class="label" ng-class="{
+          'label-warning': request.status == 'PENDING',
+          'label-success': request.status == 'APPROVED',
+          'label-danger': request.status == 'REJECTED'
+        }">
+          {{ 'settings.register.status.' + request.status.toLowerCase() | translate }}
+        </span>
+        <span ng-if="request.status == 'REJECTED' && request.rejection_reason" uib-tooltip="{{ request.rejection_reason }}">
+          <span class="fas fa-info-circle"></span>
+        </span>
+      </td>
+      <td>{{ request.processed_by }}</td>
+      <td>
+        <button class="btn btn-success btn-sm" ng-if="request.status == 'PENDING'" ng-click="approve(request)">
+          <span class="fas fa-check"></span> {{ 'settings.register.approve' | translate }}
+        </button>
+        <button class="btn btn-danger btn-sm" ng-if="request.status == 'PENDING'" ng-click="reject(request)">
+          <span class="fas fa-times"></span> {{ 'settings.register.reject' | translate }}
+        </button>
+      </td>
+    </tr>
+    <tr ng-show="!requests || requests.length == 0">
+      <td colspan="6" class="text-center">
+        <span translate="settings.register.none"></span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
