@@ -75,4 +75,21 @@ angular.module('docs').controller('Login', function(Restangular, $scope, $rootSc
       });
     });
   };
+
+  // Open registration request form
+  $scope.openRegisterRequestForm = function () {
+    $uibModal.open({
+      templateUrl: 'partial/docs/registerrequest.html',
+      controller: 'ModalRegisterRequest'
+    }).result.then(function (username) {
+      if (username === null) {
+        return;
+      }
+
+      var title = $translate.instant('login.register_request_success_title');
+      var msg = $translate.instant('login.register_request_success_message');
+      var btns = [{result: 'ok', label: $translate.instant('ok'), cssClass: 'btn-primary'}];
+      $dialog.messageBox(title, msg, btns);
+    });
+  };
 });
