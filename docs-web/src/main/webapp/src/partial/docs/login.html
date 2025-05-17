@@ -80,6 +80,14 @@
             <span class="fas fa-user"></span> {{ 'login.login_as_guest' | translate }}
           </button>
         </form>
+
+        <div class="register-box text-center">
+          <h4>{{ 'login.register_request' | translate }}</h4>
+          <p>{{ 'login.register_request_description' | translate }}</p>
+          <button class="btn btn-success" ng-click="openRegisterRequestForm()">
+            {{ 'login.register_request_button' | translate }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

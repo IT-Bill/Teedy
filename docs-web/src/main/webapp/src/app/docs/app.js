@@ -253,6 +253,15 @@ angular.module('docs',
         }
       }
     })
+    .state('settings.register', {
+      url: '/register',
+      views: {
+        'settings': {
+          templateUrl: 'partial/docs/settings.register.html',
+          controller: 'SettingsRegister'
+        }
+      }
+    })
     .state('document', {
       url: '/document',
       abstract: true,

@@ -182,7 +182,7 @@
             <configuration>
               <systemProperties>
                 <application.mode>dev</application.mode>
-                <docs.home>../data/docs</docs.home>
+                <docs.home>./docs</docs.home>
                 <!-- <systemProperty>
                   <name>application.mode</name>
                   <value>dev</value>
