@@ -18,10 +18,10 @@ angular.module('docs').controller('ModalRegisterRequest', function($scope, $uibM
       return;
     }
     
-    Restangular.one('user').put('register_request', {
-      username: $scope.user.username,
-      password: $scope.user.password,
-      email: $scope.user.email
+    Restangular.one('user/register_request').put({
+        username: $scope.user.username,
+        password: $scope.user.password,
+        email: $scope.user.email
     }).then(function() {
       $uibModalInstance.close($scope.user.username);
     }, function(e) {

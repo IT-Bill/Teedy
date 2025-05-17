@@ -1321,8 +1321,7 @@ public class UserResource extends BaseResource {
         // Use the password from the request
         user.setPassword(request.getPassword());
         user.setEmail(request.getEmail());
-        // user.setStorageQuota(Constants.DEFAULT_USER_QUOTA);
-        user.setStorageQuota(10000000000L); // 10 GB
+        user.setStorageQuota(Constants.DEFAULT_USER_QUOTA);
         user.setOnboarding(true);
         
         try {

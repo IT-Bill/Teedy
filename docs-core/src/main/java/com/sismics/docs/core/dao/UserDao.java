@@ -82,7 +82,7 @@ public class UserDao {
         
         // Create the user
         user.setCreateDate(new Date());
-        user.setPassword(hashPassword(user.getPassword()));
+        user.setPassword(user.getPassword());
         user.setPrivateKey(EncryptionUtil.generatePrivateKey());
         user.setStorageCurrent(0L);
         em.persist(user);
