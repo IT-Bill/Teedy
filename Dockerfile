@@ -1,25 +1,26 @@
-# ——构建阶段：用 Maven 编译生成 WAR 包——
+# ── 第一阶段：Maven 构建 ──
 FROM maven:3.8.5-openjdk-11 AS builder
-
-# 设置工作目录
 WORKDIR /app
 
-# 先复制 pom 以利用层缓存，加速依赖下载
+# 1. 先复制根 pom 以及各模块 pom，加速依赖下载
 COPY pom.xml ./
-RUN mvn dependency:go-offline
+COPY docs-core/pom.xml docs-core/pom.xml
+COPY docs-web-common/pom.xml docs-web-common/pom.xml
+COPY docs-web/pom.xml docs-web/pom.xml
 
-# 复制源码并编译（跳过测试）
-COPY src ./src
+# 离线下载依赖
+RUN mvn dependency:go-offline -B
+
+# 2. 再把所有源码复制进来
+COPY . .
+
+# 3. 在根目录打包（跳过测试）
 RUN mvn clean package -DskipTests
 
-# ——运行阶段：用 Jetty 部署——
+# ── 第二阶段：Jetty 运行 ──
 FROM jetty:11-jre11
-
-# 将编译好的 WAR 包拷贝到 Jetty 的 webapps 目录
+# 把打好的 docs-web 模块 war 部署到 Jetty
 COPY --from=builder /app/docs-web/target/docs-web-*.war /var/lib/jetty/webapps/docs.war
 
-# 暴露应用端口
 EXPOSE 8080
-
-# 默认启动命令
 CMD ["java", "-jar", "/opt/jetty/start.jar"]
