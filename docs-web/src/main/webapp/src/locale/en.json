@@ -676,5 +676,18 @@
   "loading": "Loading...",
   "send": "Send",
   "enabled": "Enabled",
-  "disabled": "Disabled"
+  "disabled": "Disabled",
+  "chat": {
+    "online_users": "Online Users",
+    "search_users": "Search users...",
+    "no_users_found": "No users found",
+    "select_user": "Select a user to start chatting.",
+    "chatting_with": "Chatting with",
+    "loading_history": "Loading message history...",
+    "sending": "Sending...",
+    "send_failed": "Failed to send",
+    "start_conversation": "Start your conversation!",
+    "type_message": "Type your message...",
+    "send": "Send"
+  }
 }
