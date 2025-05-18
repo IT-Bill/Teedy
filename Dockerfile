@@ -17,4 +17,4 @@ COPY --from=builder /app/docs-web/target/docs-web-*.war \
      /var/lib/jetty/webapps/docs.war
 
 EXPOSE 8080
-CMD ["java","-jar","/opt/jetty/start.jar"]
+CMD ["java","-jar","/usr/local/jetty/start.jar"]
