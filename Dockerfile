@@ -12,6 +12,12 @@ RUN mvn clean package \
 
 # ── 第二阶段：运行时镜像 ──
 FROM jetty:11-jre11
+
+USER root
+RUN mkdir -p /var/docs \
+    && mkdir -p /var/log/teedy \
+    && chown -R jetty:jetty /var/docs /var/log/teedy
+
 # 3. 把 docs-web 模块打好的 WAR 部署到 Jetty
 COPY --from=builder /app/docs-web/target/docs-web-*.war \
      /var/lib/jetty/webapps/docs.war
