@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teedy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teedy
+  template:
+    metadata:
+      labels:
+        app: teedy
+    spec:
+      containers:
+      - name: teedy
+        image: itbill8888/teedy-dev:20250518
+        ports:
+        - containerPort: 8080
